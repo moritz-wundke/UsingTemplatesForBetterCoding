@@ -46,10 +46,91 @@
                     <script type="text/template">
                     # Lets get to work!
 
-                     * Step 1
-                     * Step 2
-                     * Step 3
+                     * Quick template introduction
+                     * Templates for modular design
+                     * Basic examples
+                     * Advanced examples
+                     * Templates applied to design patterns
                     </script>
+                </section>
+
+                <!-- Quick template introduction -->
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Quick template introduction
+
+                         * Parsed by the _compiler_, not like macros which are _processed_ by the preprocessor _before_ the compiler
+                         * They solve issues with macros
+                          * The compiler can not verify if the macro parameters are of compatible types
+                          * Macros are expanded without type checking
+                          * Macro can result in multiple evaluation because the expansion is made by substitution
+                          * They are expanded before the compiler, so any compiler error messages will refer to the expanded macro
+                          * While debugging the expanded macro will showup
+                         * The macro is just a substitution before the compiler kicks in
+                         * The template generates a function that the compiler will actually compile
+
+                        <aside class="notes">
+                             Similar to macros but with a lot more power. What are templates and what they are not.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Quick template introduction II
+
+                            #include <iostream>
+
+                            // Min macro
+                            #define min(i, j) (((i) < (j)) ? (i) : (j))
+
+                            // Min template
+                            template<class T> T min_tpl(T i, T j) { return ((i < j) ? i : j); }
+
+                            int main()
+                            {
+                                int i = 9; int j = 10;
+                                int m = min(i++, j);
+                                std::cout << m << std::endl;
+                                i = 9; j = 10;
+                                m = min_tpl(i++, j);
+                                std::cout << m << std::endl;
+                                return 0;
+                            }
+
+                        <small>Program output:</small>
+
+                            10
+                            9
+
+                        <aside class="notes">
+                             i and j are evaluated twice, example when a post increment is in place
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Quick template introduction III
+                        Templates are in essence code generators for generic types. The compiler will generate
+                        the appropriate code for the given type if used.
+
+                         * Variable but not dynamic number of generic parameters.
+                         * Class templates
+                         * Function templates. Must be explicitly instanced if not the compiler will not generate it.
+                         * Specialization and partial specialization. Member functions can not be partially specialized:
+
+
+                            template <class T, class U> T tpl(U obj);   // base template
+                            template <class U> T tpl<void, U>(U obj);   // Illegal, functions can not be partially specialized
+                            template <class T> T tpl(int obj);          // Overloading is fine and totally legal
+
+                        <aside class="notes">
+                             i and j are evaluated twice, example when a post increment is in place
+                        </aside>
+                        </script>
+                    </section>
                 </section>
 
                 <!-- FOOTER -->
