@@ -1,0 +1,12 @@
+*/.vs
+*/Debug
+Templates/*/Debug
+*/Release
+Templates/*/Release
+*.pdb
+*.obj
+*.idb
+*.sdf
+*.vcxproj.filters
+*.vcxproj.user
+*.VC.opendb
