@@ -47,7 +47,7 @@
                     # Lets get to work!
 
                      * Quick template introduction
-                     * Templates for modular design
+                     * Templates for flexible design
                      * Basic examples
                      * Advanced examples
                      * Templates applied to design patterns
@@ -61,26 +61,21 @@
                         ### Quick template introduction
 
                          * Parsed by the _compiler_, not like macros which are _processed_ by the preprocessor _before_ the compiler
-                         * They solve issues with macros
-                          * The compiler can not verify if the macro parameters are of compatible types
-                          * Macros are expanded without type checking
-                          * Macro can result in multiple evaluation because the expansion is made by substitution
-                          * They are expanded before the compiler, so any compiler error messages will refer to the expanded macro
-                          * While debugging the expanded macro will showup
-                         * The macro is just a substitution before the compiler kicks in
-                         * The template generates a function that the compiler will actually compile
+                         * Solving the macro problem 
+                          * Type verification and checking
+                          * No multiple evaluation
+                          * Correct compile error messages
+                          * Debugging
 
                         <aside class="notes">
-                             Similar to macros but with a lot more power. What are templates and what they are not.
+                            Similar to macros but with a lot more power. What are templates and what they are not.
                         </aside>
                         </script>
                     </section>
 
                     <section data-markdown>
                         <script type="text/template">
-                        ### Quick template introduction II
-
-                            #include <iostream>
+                        ### Quick template introduction
 
                             // Min macro
                             #define min(i, j) (((i) < (j)) ? (i) : (j))
@@ -93,9 +88,11 @@
                                 int i = 9; int j = 10;
                                 int m = min(i++, j);
                                 std::cout << m << std::endl;
+
                                 i = 9; j = 10;
                                 m = min_tpl(i++, j);
                                 std::cout << m << std::endl;
+
                                 return 0;
                             }
 
@@ -105,20 +102,22 @@
                             9
 
                         <aside class="notes">
-                             i and j are evaluated twice, example when a post increment is in place
+                            i and j are evaluated twice, example when a post increment is in place
                         </aside>
                         </script>
                     </section>
 
                     <section data-markdown>
                         <script type="text/template">
-                        ### Quick template introduction III
+                        ### Quick template introduction
+
                         Templates are in essence code generators for generic types. The compiler will generate
                         the appropriate code for the given type if used.
 
-                         * Variable but not dynamic number of generic parameters.
-                         * Class templates
-                         * Function templates. Must be explicitly instanced if not the compiler will not generate it.
+                         * Function Templates
+                         * Class Templates
+                         * Variable Templates (C++14)
+                         * Variadic Templates (C++11)
                          * Specialization and partial specialization. Member functions can not be partially specialized:
 
 
@@ -127,13 +126,228 @@
                             template <class T> T tpl(int obj);          // Overloading is fine and totally legal
 
                         <aside class="notes">
-                             i and j are evaluated twice, example when a post increment is in place
+                            Function templates needs to be explicitly initialized some times. PI example for variable. We wont cover
+                            variable or variadic templates here, it would make our life too easy xD
                         </aside>
                         </script>
                     </section>
                 </section>
 
-                <!-- FOOTER -->
+                <!-- Templates for flexible design -->
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                         * Decomposing functionality
+                         * Plug & Play of behaviours
+                         * Better configuration of behaviours
+                         * Less code and better maintenance
+                         * Will be used along other classes
+
+                        <aside class="notes">
+                            Policy or behaviour templates
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                            template <class T>
+                            struct NewCreator
+                            {
+                                static T* CreateOrNull()
+                                {
+                                    return new T;
+                                }
+                            protected:
+                                ~NewCreator() {}
+                            };
+
+                            template <class T>
+                            struct MallocCreator
+                            {
+                                static T* CreateOrNull()
+                                {
+                                    void* alloc = std::malloc(sizeof(T));
+                                    return alloc ? return new(alloc) T : nullptr;
+                                }
+                            protected:
+                                ~MallocCreator() {}
+                            };
+
+                            template <class T>
+                            struct CloneCreator
+                            {
+                                CloneCreator(T* pObj = nullptr) : pBlueprint(pObj)
+                                {
+
+                                }
+
+                                T* CreateOrNull()
+                                {
+                                    return pBlueprint ? pBlueprint->Clone() : nullptr;
+                                }
+
+                                T* GetClonable()
+                                {
+                                    return pBlueprint;
+                                }
+                                void SetCloneable(T* pObj)
+                                {
+                                    pBlueprint = pObj;
+                                }
+                            protected:
+                                ~CloneCreator() {}
+                            private:
+                                T* pBlueprint;
+                            };
+
+                        <aside class="notes">
+                            We have 3 different types of creation strategies. CreateOrNull is static but can be also instanced.
+                            We use struct because by default all should be public (just for convinience)
+                            We have to take care of the protected dtor so we do not get undefined behaviour when deleting pointers
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                            class BaseObject
+                            {
+                            public:
+                                BaseObject() { }
+
+                                virtual void SayHi() { std::cout << "Hi from BaseObject" << std::endl; }
+                            };
+
+                            class ExtendedObject : public BaseObject
+                            {
+                            public:
+                                ExtendedObject() : BaseObject() { }
+
+                                virtual void SayHi() override { std::cout << "Hi from ExtendedObject" << std::endl; }
+                            };
+
+                            template <class T, template <class> class CreationPolicy>
+                            class ObjectManager : public CreationPolicy<T>
+                            {
+
+                            };
+
+                            // Predefine our object managers for each type and CreationPOlicy
+                            typedef ObjectManager< BaseObject, NewCreator > SimpleObjectManager;
+                            typedef ObjectManager< ExtendedObject, NewCreator > SimpleExtendedObjectManager;
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                            int main()
+                            {
+
+                                SimpleObjectManager Manager;
+                                Manager.CreateOrNull()->SayHi();
+
+                                SimpleExtendedObjectManager ExtendedManager;
+                                ExtendedManager.CreateOrNull()->SayHi();
+
+                                return 0;
+                            }
+
+                        The output will be
+
+                            Hi from BaseObject
+                            Hi from ExtendedObject
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                        But can we use function templates so create can be used such as `CreateOrNull<ExtendedObject>()`?
+
+                            struct NewCreatorFunc
+                            {
+                                template <class T>
+                                static T* CreateOrNull()
+                                {
+                                    return new T;
+                                }
+                            protected:
+                                ~NewCreatorFunc() {}
+                            };
+
+                            class ObjectManagerFunc : public NewCreatorFunc
+                            {
+
+                            };
+
+                        Then we will use it passing the type we want to create to it
+
+                            SimpleObjectManagerFunc OtherManager;
+                            OtherManager.CreateOrNull<ExtendedObject>()->SayHi();
+
+                        And the output will be
+
+                            Hi from ExtendedObject
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                         * The first approach is way more flexible.
+                         * Using function templates forces us to define the class to
+                           create everytime whis is bad for maintenance.
+                         * Class templates are only instanciated if actually used.
+
+
+
+                        <aside class="notes">
+                            First example is using template template parameters
+                        </aside>
+                        </script>
+                    </section>
+
+                </section>
+
+                <!-- More Info -->
+                <section data-markdown>
+                    <script type="text/template">
+                    ### Recommened read
+
+                    Now that you dived a bit into the template world I encourage you to dig deeper. The following links are a perfect starting point.
+
+                     * [Effective Modern C++: 42 Specific Ways to Improve Your Use of C++11 and C++14][EffectiveModernC++]
+                     * [Modern C++ Design: Generic Programming and Design Patterns Applied][ModernC++Design]
+
+                    [EffectiveModernC++]: https://www.amazon.es/Effective-Modern-Specific-Ways-Improve/dp/1491903996
+                    [ModernC++Design]: https://www.amazon.es/Modern-Design-Generic-Programming-Patterns/dp/0201704315
+                    </script>
+                </section>
+
+                <!-- Footer -->
                 <section data-markdown>
                     <script type="text/template">
                     # Thanks for listening!
