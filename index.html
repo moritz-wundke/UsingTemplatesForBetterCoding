@@ -48,9 +48,7 @@
 
                      * Quick template introduction
                      * Templates for flexible design
-                     * Basic examples
-                     * Advanced examples
-                     * Templates applied to design patterns
+                     * Real examples
                     </script>
                 </section>
 
@@ -119,7 +117,6 @@
                          * Variable Templates (C++14)
                          * Variadic Templates (C++11)
                          * Specialization and partial specialization. Member functions can not be partially specialized:
-
 
                             template <class T, class U> T tpl(U obj);   // Base template
                             template <class U> T tpl<void, U>(U obj);   // Illegal, functions can not be partially specialized
@@ -239,7 +236,7 @@
 
                             };
 
-                            // Predefine our object managers for each type and CreationPOlicy
+                            // Predefine our object managers for each type and CreationPolicy
                             typedef ObjectManager< BaseObject, NewCreator > SimpleObjectManager;
                             typedef ObjectManager< ExtendedObject, NewCreator > SimpleExtendedObjectManager;
 
@@ -322,10 +319,370 @@
                            create everytime whis is bad for maintenance.
                          * Class templates are only instanciated if actually used.
 
+                        <aside class="notes">
+                            First example is using template template parameters
+                        </aside>
+                        </script>
+                    </section>
 
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                        A more advanced example of combining multiple policy based templates
+
+                            template <
+                                class T, 
+                                template <class> class CheckingPolicy, 
+                                template <class> ThreadingPolicy.
+                                template <class> StoragePolicy
+                            >
+                            class SmartPtr;
+
+                            // [Smart pointer implementation omitted]
+
+                            typedef SmartPtr
+                            <
+                                BaseObject,     // The pointer type
+                                EnforceNotNull, // We will ensure the pointer can not be null
+                                SingleThreaded, // Pointer access is single threadd only and not thread safe (no locks)
+                                RefCount        // We will hold the object using a reference counter
+                            >
+                            BaseObjPtr;
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Templates for flexible design
+
+                         * Flexible designs using smaller atomic like components
+                         * Easy to maintain
+                         * Stable design, components are decoupled between each other, less side effects
+                         * Only instanced code is actually compiled resulting in smaller binary size
+                         * Compiler does more resulting in bettwe runtime performance while using a bit more time to compile
 
                         <aside class="notes">
                             First example is using template template parameters
+                        </aside>
+                        </script>
+                    </section>
+
+                </section>
+
+
+                <!-- Templates for flexible design -->
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Compile-time Assertions
+
+                            template <class Destination, class Source>
+                            Destination ReinterpCastChecked(Source source)
+                            {
+                                // We ensure that the destination type can hold all bits from the source type
+                                assert(sizeof(Source) <= sizeof(Destination));
+                                return reinterpret_cast<Destination>(source);
+                            }
+
+                        Using a simple template that does not exist and the compiler will yield the error
+
+                            template<bool> struct ctCheck;
+                            template<> struct ctCheck<true> {};
+
+                            #define STATIC_CHECK(expr, msg) \
+                                { ctCheck<((expr) != 0)> ERROR_##msg; (void)ERROR_##msg; } 
+
+                            template <class Destination, class Source>
+                            Destination ReinterpCastChecked(Source source)
+                            {
+                                STATIC_CHECK(sizeof(Source) <= sizeof(Destination), Destination_is_smaller_than_source)
+                                return reinterpret_cast<Destination>(source);
+                            }
+
+                        In the first example we will assert on runtime, while the later does the same but in compile time.
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Compile-time Assertions
+
+                            // Different platforms will have different sizes, we can test it in compile time now
+                            STATIC_CHECK(sizeof(uint8) == 1, uint8_wrong_size)
+
+                        When typedefing base types it is vital to ensure that they are correct, with our STATIC_CHECK we have now the power to do so.
+                        In case our uint8 does not size exactly 1 byte we will see the following compile time error in MVSC:
+
+                            error C2079: 'ERROR_uint8_wrong_size' uses undefined struct 'ctCheck<false>'
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Partial Specialization
+
+                        The compiler will performs pattern matching to instanciate the correct version of your template. We cannot spartially specialize member functions.
+
+                            template<class Container, class Controller>
+                            class Widget
+                            {
+                            public:
+                                void SomeMethod()
+                                {
+                                    std::cout << "Widget Generic" << std::endl;
+                                }
+                            };
+
+                            template<>
+                            class Widget<ContainerA, ControllerA>
+                            {
+                            public:
+                                void SomeMethod()
+                                {
+                                    std::cout << "Widget<ContainerA, ControllerA> Specialization" << std::endl;
+                                }
+                            };
+
+                        <aside class="notes">
+                            The first one is our generic implementation. The second is a specialization for a specific container and controller. 
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Partial Specialization
+
+                            template<class Container>
+                            class Widget<Container, ControllerA>
+                            {
+                            public:
+                                void SomeMethod()
+                                {
+                                    std::cout << "Widget<" << typeid(Container).name() << ", ControllerA> Specialization" << std::endl;
+                                }
+                            };
+
+                            template<class ContainerArg>
+                            class Widget<ContainerWithArg<ContainerArg>, ControllerA>
+                            {
+                            public:
+                                void SomeMethod()
+                                {
+                                    std::cout << "Widget<" << typeid(ContainerWithArg<ContainerArg>).name() 
+                                              << ", ControllerA> Specialization" << std::endl;
+                                }
+                            };
+
+                        <aside class="notes">
+                            The first one is a partial specialization for any container type but for Controller A. The second is yet another partial specialziation but this time
+                            for a specifc compiler that has a single argument type.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Partial Specialization
+
+                        Instanciating each of our specializations and calling `SomeMethod` we will get the following output
+
+                            Widget Generic
+                            Widget <ContainerA, ControllerA> Specialization
+                            Widget <int, ControllerA> Partial Specialization
+                            Widget <class ContainerWithArg<int>, ControllerA> Partial Specialization
+
+                        <aside class="notes">
+                            TThe first one is a partial specialization for any container type but for Controller A. The second is yet another partial specialziation but this time
+                            for a specifc compiler that has a single argument type.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Adapter Pattern
+
+                            class IShootingInterface
+                            {
+                            public:
+                                virtual void Shoot() = 0;
+                            };
+
+                            template<class T, class P>
+                            IShootingInterface* MakeShootingAdapter(const T& obj, const P& arg)
+                            {
+                                class AdapterImpl : public IShootingInterface
+                                {
+                                public:
+                                    AdapterImpl(const T& obj, const P& arg)
+                                        : _obj(obj), _arg(arg) { }
+
+                                    virtual void Shoot() override
+                                    {
+                                        _obj.Call(_arg);
+                                    };
+                                private:
+                                    T _obj;
+                                    P _arg;
+                                };
+                                return new AdapterImpl(obj, arg);
+                            }
+
+                            class Soldier
+                            {
+                            public:
+                                void ShootRifle()
+                                {
+                                    std::cout << "Shooting Rifle" << std::endl;
+                                }
+                            };
+
+                            class Tank
+                            {
+                            public:
+                                void ShootCannon()
+                                {
+                                    std::cout << "Shooting Cannon" << std::endl;
+                                }
+                            };
+
+                            class SoldierShootAdapter
+                            {
+                            public:
+                                void Call(Soldier& soldier)
+                                {
+                                    soldier.ShootRifle();
+                                }
+                            };
+
+                            class TankShootAdapter
+                            {
+                            public:
+                                void Call(Tank& tank)
+                                {
+                                    tank.ShootCannon();
+                                }
+                            };
+
+                        <aside class="notes">
+                            The inner class is only visible in the given scope and the class itself is sealed.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Adapter Pattern
+
+                            // Create instanced and adapters
+                            Soldier soldier = Soldier();
+                            SoldierShootAdapter soldierAdapter = SoldierShootAdapter();
+
+                            Tank tank = Tank();
+                            TankShootAdapter tankAdapter = TankShootAdapter();
+
+                            // Now we create our interface adapters
+                            IShootingInterface* soldierShooter = MakeShootingAdapter(soldierAdapter, soldier);
+                            IShootingInterface* tankShooter = MakeShootingAdapter(tankAdapter, tank);
+
+                            // We shoot using the common interfaces
+                            soldierShooter->Shoot();
+                            tankShooter->Shoot();
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Switch Template
+
+                        Consider a multimethod class that uses a given implementation of a method identifier
+
+                            template<int Method>
+                            class MultiMethodSimple
+                            {
+                            private:
+                                void MethodImplementation0()
+                                {
+                                    std::cout << "MethodImplementation0" << std::endl;
+                                }
+
+                                void MethodImplementation1()
+                                {
+                                    std::cout << "MethodImplementation1" << std::endl;
+                                }
+                            public:
+                                void DoMethod()
+                                {
+                                    switch (Method)
+                                    {
+                                    case 0:
+                                        MethodImplementation0();
+                                        break;
+                                    case 1:
+                                        MethodImplementation1();
+                                        break;
+                                    default:
+                                        throw "Method not defined!";
+                                    }
+                                }
+                            };
+
+                        <aside class="notes">
+                            
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Switch Template
+
+                        The previous code has some serious issues
+
+                         * No compile time validation for methods
+                         * Runtime exceptions, environments without exceptions will be doomed
+                         * Increasing code size
+
+                        So how can we improve it and taking advantage of template instanciation?
+
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
                         </aside>
                         </script>
                     </section>
@@ -341,6 +698,8 @@
 
                      * [Effective Modern C++: 42 Specific Ways to Improve Your Use of C++11 and C++14][EffectiveModernC++]
                      * [Modern C++ Design: Generic Programming and Design Patterns Applied][ModernC++Design]
+
+                    <small>Examples based on the Loki library Copyright (c) 2001 by Andrei Alexandrescu</small>
 
                     [EffectiveModernC++]: https://www.amazon.es/Effective-Modern-Specific-Ways-Improve/dp/1491903996
                     [ModernC++Design]: https://www.amazon.es/Modern-Design-Generic-Programming-Patterns/dp/0201704315
