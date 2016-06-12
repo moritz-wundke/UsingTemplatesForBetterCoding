@@ -49,6 +49,7 @@
                      * Quick template introduction
                      * Templates for flexible design
                      * Real examples
+                     * Abstract Factory
                     </script>
                 </section>
 
@@ -681,6 +682,111 @@
 
                         So how can we improve it and taking advantage of template instanciation?
 
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Switch Template
+
+                            template<int V>
+                            struct SwitchType
+                            {
+                                enum { value = V };
+                            };
+
+                            template<int Method>
+                            class MultiMethodClass
+                            {
+                            private:
+                                void MethodImplementation(SwitchType<0>)
+                                {
+                                    std::cout << "MethodImplementation(SwitchType<0>)" << std::endl;
+                                }
+
+                                void MethodImplementation(SwitchType<1>)
+                                {
+                                    std::cout << "MethodImplementation(SwitchType<1>)" << std::endl;
+                                }
+                            public:
+                                void DoMethod()
+                                {
+                                    MethodImplementation(SwitchType<Method>());
+                                }
+                            };
+
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Real examples
+
+                        Type Lists
+
+                        Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
+
+                        TYpe list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
+
+                        Before we go into the realm of type lists we have to define two special types to define edge cases in our algorithms
+
+                            class NullType {};
+                            struct EmptyType {};
+
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    
+
+                </section>
+
+                <!-- Abstract Facory -->
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Abstract Factory
+
+                        Type Lists
+
+                        Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
+
+                        TYpe list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
+
+                        Before we go into the realm of type lists we have to define two special types to define edge cases in our algorithms
+
+                            class NullType {};
+                            struct EmptyType {};
+
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Abstract Factory
+
+                        Type Lists
+
+                        A simple case where you can take use of type lists is creating Abstract Factories such as the following example
+
+                            typedef AbstractFactory<TYPELIST_2<Soldier, Tank>> Factory;
+
+                            Factory MyFactory = Factory();
+                            Soldier* soldier = Factory->Create<Soldier>();
+                        
                         <aside class="notes">
                             All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
                         </aside>
