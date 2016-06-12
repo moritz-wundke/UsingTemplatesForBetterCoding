@@ -25,7 +25,7 @@ class ObjectManager : public CreationPolicy<T>
 
 };
 
-// Predefine our object managers for each type and CreationPOlicy
+// Predefine our object managers for each type and CreationPolicy
 typedef ObjectManager< BaseObject, NewCreator > SimpleObjectManager;
 typedef ObjectManager< ExtendedObject, NewCreator > SimpleExtendedObjectManager;
 
