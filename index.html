@@ -429,6 +429,8 @@
 
                             error C2079: 'ERROR_uint8_wrong_size' uses undefined struct 'ctCheck<false>'
 
+                        Recent versions of C++ come with built-in support for compile time asserts, if you are using one of those versions I encourage you to use *static_assert*.
+
                         <aside class="notes">
                             
                         </aside>
@@ -555,7 +557,12 @@
                                 return new AdapterImpl(obj, arg);
                             }
 
-                            class Soldier
+                            class BaseType
+                            {
+
+                            };
+
+                            class Soldier : BaseType
                             {
                             public:
                                 void ShootRifle()
@@ -564,7 +571,7 @@
                                 }
                             };
 
-                            class Tank
+                            class Tank : BaseType
                             {
                             public:
                                 void ShootCannon()
@@ -724,50 +731,149 @@
                             All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
                         </aside>
                         </script>
+                    </section>                    
+
+                </section>
+
+                <!-- Typelists -->
+                <section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Type Lists
+
+                        Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
+
+                        Again, you can implemenmt the same with variadic templates in recent C++ versions (just wait for the last part ^^) but for now we will implement it the old fashion way to show you the power of templates.
+                        
+                        <aside class="notes">
+
+                        </aside>
+                        </script>
                     </section>
 
                     <section data-markdown>
                         <script type="text/template">
-                        ### Real examples
-
-                        Type Lists
-
-                        Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
-
-                        TYpe list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
+                        ### Type Lists
 
                         Before we go into the realm of type lists we have to define two special types to define edge cases in our algorithms
 
                             class NullType {};
                             struct EmptyType {};
 
+                        Now let us define what a type list is
+
+                            template <class T, class U>
+                            struct Typelist
+                            {
+                                typedef T Head;
+                                typedef U Tail;
+                            };
+
+                            // Typelist defining all available char types, note the NullType at the end?
+                            typedef Typelist<char, Typelist<signed char, Typelist<unsigned char, NullType>>> CharTypelist;
+
+                            // Too make our life easier we will pre define those lists
+                            #define TYPE_LIST_1(T1) Typelist<T1, NullType>
+                            #define TYPE_LIST_2(T1, T2) Typelist<T1, TYPE_LIST_1(T2)>
+                            #define TYPE_LIST_3(T1, T2, T3) Typelist<T1, TYPE_LIST_2(T2, T3)>
+
+                            typedef TYPE_LIST_3(char, signed char, unsigned char) CharacterTypes;
+
+                        Type list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
+                        
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        
                         </aside>
                         </script>
                     </section>
 
-                    
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Type Lists
+
+                        Get lenght of a Type List
+
+                            template <class TList> struct Length;
+                            template <> struct Length<NullType>
+                            {
+                                enum { value = 0 };
+                            };
+                            template <class T, class U>
+                            struct Length <Typelist<T, U>>
+                            {
+                                enum { value = 1 + Length<U>::value };
+                            };
+                        
+                        <aside class="notes">
+                            Explain the recursive algo
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Type Lists
+
+                        Get la type at a given index
+
+                            template <class TList, unsigned int index> struct TypeAt;
+
+                            template <class Head, class Tail>
+                            struct TypeAt<Typelist<Head, Tail>, 0>
+                            {
+                                typedef Head result;
+                            };
+
+                            template <class Head, class Tail, unsigned int i>
+                            struct TypeAt<Typelist<Head, Tail>, i>
+                            {
+                                typedef typename TypeAt<Tail, i - 1>::result result;
+                            };
+
+                        
+                        <aside class="notes">
+                            Explain the recursive algo
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Type Lists
+
+                        We will then use the algos just as any other method but it will resolve in compile time
+
+                            std::cout << "Number of character types: " << Length<CharacterTypes>::value << std::endl;
+                            std::cout << "Type at index 1: " << typeid(TypeAt<CharacterTypes, 1>::result).name() << std::endl;
+                        
+                        And it will give us the following output
+
+                            Number of character types: 3
+                            Type at index 1: signed char
+                        <aside class="notes">
+                            Explain the recursive algo
+                        </aside>
+                        </script>
+                    </section>
 
                 </section>
 
                 <!-- Abstract Facory -->
                 <section>
+
                     <section data-markdown>
                         <script type="text/template">
                         ### Abstract Factory
 
-                        Type Lists
+                        As we said before we will use a type list as the one before to implement a simple AbstractFactory. Keep in mind that there is
+                        room for improvement and the factory is not meant to be completed.
 
-                        Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
+                        A simple case where you can take use of type lists is creating Abstract Factories such as the following example
 
-                        TYpe list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
-
-                        Before we go into the realm of type lists we have to define two special types to define edge cases in our algorithms
-
-                            class NullType {};
-                            struct EmptyType {};
-
+                            typedef AbstractFactory<BaseType, BuildTypelist<Soldier, Tank>::result> Factory;
+                            Base* instance = Factory::Create(1);
+                        
                         <aside class="notes">
                             All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
                         </aside>
@@ -778,14 +884,93 @@
                         <script type="text/template">
                         ### Abstract Factory
 
-                        Type Lists
+                        We do need to define some more tools. Fist we need something to overload a
+                        method for pattern matching. Similar to what we did for the multimethod but
+                        using a type instead.
 
-                        A simple case where you can take use of type lists is creating Abstract Factories such as the following example
+                            template <typename T>
+                            struct Type2Type
+                            {
+                                typedef T OriginalType;
+                            };
 
-                            typedef AbstractFactory<TYPELIST_2<Soldier, Tank>> Factory;
+                        The next component we need is the AbstractProducer. It defines the CreationPolicy
+                        just as in our first example but using the Type2Type overload
 
-                            Factory MyFactory = Factory();
-                            Soldier* soldier = Factory->Create<Soldier>();
+                            template <class T>
+                            class AbstarctProducer
+                            {
+                            public:
+                                virtual T* DoCreate(Type2Type<T>) = 0;
+                                virtual ~AbstarctProducer() {}
+                            };
+                        
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Abstract Factory
+
+                        Our AbstractFactory looks just like the following
+
+                            template
+                            <
+                                class TList,
+                                    template <class> class Producer = AbstarctProducer
+                            >
+                            class AbstractFactory : public GenScatterHierarchy<TList, Producer>
+                            {
+                            public:
+                                typedef TList ProductList;
+
+                                template <class T> T* Create()
+                                {
+                                    Unit<T>& unit = *this;
+                                    return unit.DoCreate(Type2Type<T>());
+                                }
+                            };
+
+                        You might have noticed *GenScatterHierarchy*, it is a template that will generate a scattered hierarchy, what I mean by this is that each of the classes in it
+                        defines a pure virtyal *Create* method for each type in the type list. This way we ensure that all types have the right method generated at compile time.
+
+                        <small>The implementation of GenScatterHierarchy is included in the code repo</small>
+                        
+                        <aside class="notes">
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                        </aside>
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                        ### Abstract Factory
+
+                        As an example we provide a simple new producer
+
+                            template <class Class, class Base>
+                            class NewAbstractProducer : public Base
+                            {
+                                typedef typename Base::ClassList BaseClassList;
+
+                            protected:
+                                typedef typename BaseClassList::Tail ClassList;
+
+                            public:
+                                typedef typename BaseClassList::Head AbstractClass;
+                                Class* DoCreate(Type2Type<AbstractClass>)
+                                {
+                                    return new ConcreteProduct;
+                                }
+                            };
+
+                        You might have noticed *GenScatterHierarchy*, it is a template that will generate a scattered hierarchy, what I mean by this is that each of the classes in it
+                        defines a pure virtyal *Create* method for each type in the type list. This way we ensure that all types have the right method generated at compile time.
+
+                        <small>The implementation of GenScatterHierarchy is included in the code repo</small>
                         
                         <aside class="notes">
                             All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
