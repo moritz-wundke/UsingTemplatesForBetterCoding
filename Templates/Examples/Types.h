@@ -2,6 +2,23 @@
 #include <iostream>
 #include <cassert>
 
+// Examples are based on the loki library by Andrei Alexandrescu
+
+////////////////////////////////////////////////////////////////////////////////
+// The Loki Library
+// Copyright (c) 2001 by Andrei Alexandrescu
+// This code accompanies the book:
+// Alexandrescu, Andrei. "Modern C++ Design: Generic Programming and Design 
+//     Patterns Applied". Copyright (c) 2001. Addison-Wesley.
+// Permission to use, copy, modify, distribute and sell this software for any 
+//     purpose is hereby granted without fee, provided that the above copyright 
+//     notice appear in all copies and that both that copyright notice and this 
+//     permission notice appear in supporting documentation.
+// The author or Addison-Welsey Longman make no representations about the 
+//     suitability of this software for any purpose. It is provided "as is" 
+//     without express or implied warranty.
+////////////////////////////////////////////////////////////////////////////////
+
 //
 // Types and helpers
 //
@@ -71,21 +88,6 @@ Destination ReinterpCastChecked_Runtime(Source source)
 
 
 // STATIC_CHECK License START
-
-////////////////////////////////////////////////////////////////////////////////
-// The Loki Library
-// Copyright (c) 2001 by Andrei Alexandrescu
-// This code accompanies the book:
-// Alexandrescu, Andrei. "Modern C++ Design: Generic Programming and Design 
-//     Patterns Applied". Copyright (c) 2001. Addison-Wesley.
-// Permission to use, copy, modify, distribute and sell this software for any 
-//     purpose is hereby granted without fee, provided that the above copyright 
-//     notice appear in all copies and that both that copyright notice and this 
-//     permission notice appear in supporting documentation.
-// The author or Addison-Welsey Longman make no representations about the 
-//     suitability of this software for any purpose. It is provided "as is" 
-//     without express or implied warranty.
-////////////////////////////////////////////////////////////////////////////////
 
 template<bool> struct ctCheck;
 template<> struct ctCheck<true> {};
@@ -178,7 +180,12 @@ IShootingInterface* MakeShootingAdapter(const T& obj, const P& arg)
 	return new AdapterImpl(obj, arg);
 }
 
-class Soldier
+class BaseType
+{
+
+};
+
+class Soldier : BaseType
 {
 public:
 	void ShootRifle()
@@ -187,7 +194,7 @@ public:
 	}
 };
 
-class Tank
+class Tank : BaseType
 {
 public:
 	void ShootCannon()
@@ -262,6 +269,12 @@ struct SwitchType
 	enum { value = V };
 };
 
+template <typename T>
+struct Type2Type
+{
+	typedef T OriginalType;
+};
+
 template<int Method>
 class MultiMethodClass
 {
@@ -308,7 +321,148 @@ public:
 class NullType {};
 struct EmptyType {};
 
-typedef AbstractFactory<TYPELIST_2<Soldier, Tank>> Factory;
+template <class T, class U = NullType>
+struct Typelist
+{
+	typedef T Head;
+	typedef U Tail;
+};
 
-Factory MyFactory = Factory();
-Soldier* soldier = Factory->Create<Soldier>();
+// Typelist defining all available char types, note the NullType at the end?
+typedef Typelist<char, Typelist<signed char, Typelist<unsigned char, NullType>>> CharTypelist;
+
+#define TYPE_LIST_1(T1) Typelist<T1, NullType>
+#define TYPE_LIST_2(T1, T2) Typelist<T1, TYPE_LIST_1(T2)>
+#define TYPE_LIST_3(T1, T2, T3) Typelist<T1, TYPE_LIST_2(T2, T3)>
+
+typedef TYPE_LIST_3(char, signed char, unsigned char) CharacterTypes;
+
+// Find the length of a type list
+template <class TList> struct Length;
+template <> struct Length<NullType>
+{
+	enum { value = 0 };
+};
+template <class T, class U>
+struct Length <Typelist<T, U>>
+{
+	enum { value = 1 + Length<U>::value };
+};
+
+// Get an element using an index
+template <class TList, unsigned int index> struct TypeAt;
+
+template <class Head, class Tail>
+struct TypeAt<Typelist<Head, Tail>, 0>
+{
+	typedef Head result;
+};
+
+template <class Head, class Tail, unsigned int i>
+struct TypeAt<Typelist<Head, Tail>, i>
+{
+	typedef typename TypeAt<Tail, i - 1>::result result;
+};
+
+//
+// Simple abstract factory
+//
+
+template<class... Args>
+struct BuildTypelist;
+
+template <class Head>
+struct BuildTypelist<Head>
+{
+	typedef Typelist<Head> result;
+};
+
+template <class Head, class... Args>
+struct BuildTypelist<Head, Args...>
+{
+	typedef Typelist<Head, typename BuildTypelist<Args...>::result > result;
+};
+
+// Generate a scattered hierarchy
+
+template <class TList, template <class> class Unit>
+class GenScatterHierarchy;
+
+template <class T1, class T2, template <class> class Unit>
+class GenScatterHierarchy<Typelist<T1, T2>, Unit>
+	: public GenScatterHierarchy<T1, Unit>
+	, public GenScatterHierarchy<T2, Unit>
+{
+public:
+	typedef Typelist<T1, T2> TList;
+	typedef GenScatterHierarchy<T1, Unit> LeftBase;
+	typedef GenScatterHierarchy<T2, Unit> RightBase;
+	template <typename T> struct Rebind
+	{
+		typedef Unit<T> Result;
+	};
+};
+
+template <class AtomicType, template <class> class Unit>
+class GenScatterHierarchy : public Unit<AtomicType>
+{
+	typedef Unit<AtomicType> LeftBase;
+	template <typename T> struct Rebind
+	{
+		typedef Unit<T> Result;
+	};
+};
+
+template <template <class> class Unit>
+class GenScatterHierarchy<NullType, Unit>
+{
+	template <typename T> struct Rebind
+	{
+		typedef Unit<T> Result;
+	};
+};
+
+
+// The AbstractFactory
+
+template <class T>
+class AbstarctProducer
+{
+public:
+	virtual T* DoCreate(Type2Type<T>) = 0;
+	virtual ~AbstarctProducer() {}
+};
+
+template <class Class, class Base>
+class NewAbstractProducer : public Base
+{
+	typedef typename Base::ClassList BaseClassList;
+
+protected:
+	typedef typename BaseClassList::Tail ClassList;
+
+public:
+	typedef typename BaseClassList::Head AbstractClass;
+	Class* DoCreate(Type2Type<AbstractClass>)
+	{
+		return new ConcreteProduct;
+	}
+};
+
+template
+<
+	class TList,
+		template <class> class Producer = AbstarctProducer
+>
+class AbstractFactory : public GenScatterHierarchy<TList, Producer>
+{
+public:
+	typedef TList ClassList;
+
+	template <class T> T* Create()
+	{
+		Unit<T>& unit = *this;
+		return unit.DoCreate(Type2Type<T>());
+	}
+};
+

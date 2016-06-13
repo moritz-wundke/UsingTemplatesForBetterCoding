@@ -6,9 +6,11 @@
 #define ENABLE_PARTIAL_SPECIALIZATION 1
 #define ENABLE_ADAPTER_PATTERN 2
 #define ENABLE_SWITCH_TYPE 3
+#define ENABLE_TYPE_LISTS 4
+#define ENABLE_ABSTRACT_FACTORY 5
 
 // Set define to use the examples you wish
-#define ENABLE_CODE ENABLE_SWITCH_TYPE
+#define ENABLE_CODE ENABLE_ABSTRACT_FACTORY
 
 int main()
 {
@@ -66,8 +68,15 @@ int main()
 
 	auto MultiInstance1 = MultiMethodClass<1>();
 	MultiInstance1.DoMethod();
+#elif ENABLE_CODE == ENABLE_TYPE_LISTS
+
+	std::cout << "Number of character types: " << Length<CharacterTypes>::value << std::endl;
+	std::cout << "Type at index 1: " << typeid(TypeAt<CharacterTypes, 1>::result).name() << std::endl;
+
+#elif ENABLE_CODE == ENABLE_ABSTRACT_FACTORY
+
+	std::cout << "Number of Enemy types: " << Length<BuildTypelist<Soldier, Tank>::result>::value << std::endl;
 
 #endif
 	return 0;
 }
-
