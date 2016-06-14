@@ -318,8 +318,7 @@ public:
 // Type lists
 //
 
-class NullType {};
-struct EmptyType {};
+class NullType {};  // Defines our null values for types, used like a mark for the end of a type list
 
 template <class T, class U = NullType>
 struct Typelist
@@ -362,6 +361,51 @@ template <class Head, class Tail, unsigned int i>
 struct TypeAt<Typelist<Head, Tail>, i>
 {
 	typedef typename TypeAt<Tail, i - 1>::result result;
+};
+
+// Append a type list
+
+template <class TList, class T> struct Append;
+
+template <> struct Append<NullType, NullType>
+{
+	typedef NullType result;
+};
+
+template <class T> struct Append<NullType, T>
+{
+	typedef TYPE_LIST_1(T) result;
+};
+
+template <class Head, class Tail>
+struct Append<NullType, Typelist<Head, Tail> >
+{
+	typedef Typelist<Head, Tail> result;
+};
+
+template <class Head, class Tail, class T>
+struct Append<Typelist<Head, Tail>, T>
+{
+	typedef Typelist<Head,
+		typename Append<Tail, T>::result>
+		result;
+};
+
+// Reverse a type list
+
+template <class TList> struct Reverse;
+
+template <class T>
+struct Reverse< TYPE_LIST_1(T) >
+{
+	typedef TYPE_LIST_1(T) result;
+};
+
+template <class Head, class Tail>
+struct Reverse< Typelist<Head, Tail> >
+{
+	typedef typename Append<
+		typename Reverse<Tail>::result, Head>::result result;
 };
 
 //
@@ -422,6 +466,39 @@ class GenScatterHierarchy<NullType, Unit>
 	};
 };
 
+// Generate a linear hierarchy
+
+template
+<
+	class TList,
+	template <class AtomicType, class Base> class Unit,
+	class Root = EmptyType
+>
+class GenLinearHierarchy;
+
+template
+<
+	class T1,
+	class T2,
+	template <class, class> class Unit,
+	class Root
+>
+class GenLinearHierarchy<Typelist<T1, T2>, Unit, Root>
+	: public Unit< T1, GenLinearHierarchy<T2, Unit, Root> >
+{
+};
+
+template
+<
+	class T,
+	template <class, class> class Unit,
+	class Root
+>
+class GenLinearHierarchy<Typelist<T, NullType>, Unit, Root>
+	: public Unit<T, Root>
+{
+};
+
 
 // The AbstractFactory
 
@@ -433,26 +510,10 @@ public:
 	virtual ~AbstarctProducer() {}
 };
 
-template <class Class, class Base>
-class NewAbstractProducer : public Base
-{
-	typedef typename Base::ClassList BaseClassList;
-
-protected:
-	typedef typename BaseClassList::Tail ClassList;
-
-public:
-	typedef typename BaseClassList::Head AbstractClass;
-	Class* DoCreate(Type2Type<AbstractClass>)
-	{
-		return new ConcreteProduct;
-	}
-};
-
 template
 <
 	class TList,
-		template <class> class Producer = AbstarctProducer
+	template <class> class Producer = AbstarctProducer
 >
 class AbstractFactory : public GenScatterHierarchy<TList, Producer>
 {
@@ -461,8 +522,40 @@ public:
 
 	template <class T> T* Create()
 	{
-		Unit<T>& unit = *this;
+		Producer<T>& unit = *this;
 		return unit.DoCreate(Type2Type<T>());
 	}
 };
 
+// A implementation of our interface
+
+template <class NewClass, class Base>
+class NewCreator : public Base
+{
+	typedef typename Base::ClassList BaseClassList;
+
+protected:
+	typedef typename BaseClassList::Tail ClassList;
+
+public:
+	typedef typename BaseClassList::Head AbstractClass;
+	NewClass* DoCreate(Type2Type<AbstractClass>)
+	{
+		return new NewClass;
+	}
+};
+
+template
+<
+	class AbstractFact,
+	template <class, class> class Creator = NewCreator,
+	class TList = typename AbstractFact::ClassList
+>
+class AbstractFactoryImpl
+	: public GenLinearHierarchy<
+		typename Reverse<TList>::result, Creator, AbstractFact>
+{
+public:
+	typedef typename AbstractFact::ClassList ClassList;
+	typedef TList ConcreteClassList;
+};

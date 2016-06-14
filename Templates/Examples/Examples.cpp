@@ -77,6 +77,13 @@ int main()
 
 	std::cout << "Number of Enemy types: " << Length<BuildTypelist<Soldier, Tank>::result>::value << std::endl;
 
+	typedef AbstractFactory<BuildTypelist<Soldier, Tank>::result> EnemyFactory;
+	AbstractFactoryImpl<EnemyFactory> factory = AbstractFactoryImpl<EnemyFactory>();
+	auto soldier = factory.Create<Soldier>();
+
+	std::cout << "We just built a: " << typeid(soldier).name() << std::endl;
+
+
 #endif
 	return 0;
 }
