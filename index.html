@@ -124,8 +124,7 @@
                             template <class T> T tpl(int obj);          // Overloading is fine and totally legal
 
                         <aside class="notes">
-                            Function templates needs to be explicitly initialized some times. PI example for variable. We wont cover
-                            variable or variadic templates here, it would make our life too easy xD
+                            Function templates needs to be explicitly initialized some times. PI example for variable. Variadics get used at the last example of the talk.
                         </aside>
                         </script>
                     </section>
@@ -138,13 +137,13 @@
                         ### Templates for flexible design
 
                          * Decomposing functionality
-                         * Plug & Play of behaviours
-                         * Better configuration of behaviours
+                         * Plug & Play of behaviors
+                         * Better configuration of behaviors
                          * Less code and better maintenance
                          * Will be used along other classes
 
                         <aside class="notes">
-                            Policy or behaviour templates
+                            Policy or behavior templates
                         </aside>
                         </script>
                     </section>
@@ -205,8 +204,8 @@
 
                         <aside class="notes">
                             We have 3 different types of creation strategies. CreateOrNull is static but can be also instanced.
-                            We use struct because by default all should be public (just for convinience)
-                            We have to take care of the protected dtor so we do not get undefined behaviour when deleting pointers
+                            We use struct because by default all should be public (just for convenience)
+                            We have to take care of the protected dtor so we do not get undefined behavior when deleting pointers
                         </aside>
                         </script>
                     </section>
@@ -317,8 +316,8 @@
 
                          * The first approach is way more flexible.
                          * Using function templates forces us to define the class to
-                           create everytime whis is bad for maintenance.
-                         * Class templates are only instanciated if actually used.
+                           create every-time which is bad for maintenance.
+                         * Class templates are only instantiated if actually used.
 
                         <aside class="notes">
                             First example is using template template parameters
@@ -346,7 +345,7 @@
                             <
                                 BaseObject,     // The pointer type
                                 EnforceNotNull, // We will ensure the pointer can not be null
-                                SingleThreaded, // Pointer access is single threadd only and not thread safe (no locks)
+                                SingleThreaded, // Pointer access is single thread only and not thread safe (no locks)
                                 RefCount        // We will hold the object using a reference counter
                             >
                             BaseObjPtr;
@@ -365,7 +364,7 @@
                          * Easy to maintain
                          * Stable design, components are decoupled between each other, less side effects
                          * Only instanced code is actually compiled resulting in smaller binary size
-                         * Compiler does more resulting in bettwe runtime performance while using a bit more time to compile
+                         * Compiler does more resulting in better run-time performance while using a bit more time to compile
 
                         <aside class="notes">
                             First example is using template template parameters
@@ -407,7 +406,7 @@
                                 return reinterpret_cast<Destination>(source);
                             }
 
-                        In the first example we will assert on runtime, while the later does the same but in compile time.
+                        In the first example we will assert on run-time, while the later does the same but in compile time.
 
                         <aside class="notes">
                             
@@ -421,7 +420,7 @@
 
                         Compile-time Assertions
 
-                            // Different platforms will have different sizes, we can test it in compile time now
+                            // We might typedef uint8 wrongly on a given platform which would result in very bad bugs
                             STATIC_CHECK(sizeof(uint8) == 1, uint8_wrong_size)
 
                         When typedefing base types it is vital to ensure that they are correct, with our STATIC_CHECK we have now the power to do so.
@@ -443,7 +442,7 @@
 
                         Partial Specialization
 
-                        The compiler will performs pattern matching to instanciate the correct version of your template. We cannot spartially specialize member functions.
+                        The compiler will performs pattern matching to instantiate the correct version of your template. We cannot partially specialize member functions.
 
                             template<class Container, class Controller>
                             class Widget
@@ -499,8 +498,8 @@
                             };
 
                         <aside class="notes">
-                            The first one is a partial specialization for any container type but for Controller A. The second is yet another partial specialziation but this time
-                            for a specifc compiler that has a single argument type.
+                            The first one is a partial specialization for any container type but for Controller A. The second is yet another partial specialization but this time
+                            for a specific compiler that has a single argument type.
                         </aside>
                         </script>
                     </section>
@@ -511,7 +510,7 @@
 
                         Partial Specialization
 
-                        Instanciating each of our specializations and calling `SomeMethod` we will get the following output
+                        Instantiating each of our specializations and calling *SomeMethod* we will get the following output
 
                             Widget Generic
                             Widget <ContainerA, ControllerA> Specialization
@@ -519,8 +518,6 @@
                             Widget <class ContainerWithArg<int>, ControllerA> Partial Specialization
 
                         <aside class="notes">
-                            TThe first one is a partial specialization for any container type but for Controller A. The second is yet another partial specialziation but this time
-                            for a specifc compiler that has a single argument type.
                         </aside>
                         </script>
                     </section>
@@ -637,7 +634,7 @@
 
                         Switch Template
 
-                        Consider a multimethod class that uses a given implementation of a method identifier
+                        Consider a multi-method class that uses an int template param to identify the right implementation.
 
                             template<int Method>
                             class MultiMethodSimple
@@ -684,10 +681,10 @@
                         The previous code has some serious issues
 
                          * No compile time validation for methods
-                         * Runtime exceptions, environments without exceptions will be doomed
+                         * Run-time exceptions, environments without exceptions will be doomed
                          * Increasing code size
 
-                        So how can we improve it and taking advantage of template instanciation?
+                        So how can we improve it and taking advantage of template instantiation?
 
                         <aside class="notes">
                             All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
@@ -728,7 +725,7 @@
                             };
 
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in run-time.
                         </aside>
                         </script>
                     </section>                    
@@ -744,7 +741,7 @@
 
                         Type lists are a powerful tool for generic programming. They provide a way to express and manipulate collections of types, generate data structures or even code from those collections.
 
-                        Again, you can implemenmt the same with variadic templates in recent C++ versions (just wait for the last part ^^) but for now we will implement it the old fashion way to show you the power of templates.
+                        Again, you can implement the same with variadic templates in recent C++ versions (just wait for the last part ^^) but for now we will implement it the old fashion way to show you the power of templates.
                         
                         <aside class="notes">
 
@@ -758,8 +755,7 @@
 
                         Before we go into the realm of type lists we have to define two special types to define edge cases in our algorithms
 
-                            class NullType {};
-                            struct EmptyType {};
+                            class NullType {}; // Defines our null values for types, used like a mark for the end of a type list
 
                         Now let us define what a type list is
 
@@ -780,7 +776,7 @@
 
                             typedef TYPE_LIST_3(char, signed char, unsigned char) CharacterTypes;
 
-                        Type list manipulation is implemented though compile time recursion, the idea is very similar to recursive runtime code so you should be familiar with it.
+                        Type list manipulation is implemented though compile time recursion, the idea is very similar to recursive run-time code so you should be familiar with it.
                         
                         <aside class="notes">
                         
@@ -792,7 +788,7 @@
                         <script type="text/template">
                         ### Type Lists
 
-                        Get lenght of a Type List
+                        Get length of a Type List
 
                             template <class TList> struct Length;
                             template <> struct Length<NullType>
@@ -842,7 +838,7 @@
                         <script type="text/template">
                         ### Type Lists
 
-                        We will then use the algos just as any other method but it will resolve in compile time
+                        We will then use the algorithms just as any other method but it will resolve in compile time
 
                             std::cout << "Number of character types: " << Length<CharacterTypes>::value << std::endl;
                             std::cout << "Type at index 1: " << typeid(TypeAt<CharacterTypes, 1>::result).name() << std::endl;
@@ -851,8 +847,8 @@
 
                             Number of character types: 3
                             Type at index 1: signed char
+
                         <aside class="notes">
-                            Explain the recursive algo
                         </aside>
                         </script>
                     </section>
@@ -871,11 +867,12 @@
 
                         A simple case where you can take use of type lists is creating Abstract Factories such as the following example
 
-                            typedef AbstractFactory<BaseType, BuildTypelist<Soldier, Tank>::result> Factory;
-                            Base* instance = Factory::Create(1);
+                            typedef AbstractFactory<BuildTypelist<Soldier, Tank>::result> EnemyFactory;
+                            AbstractFactoryImpl<EnemyFactory> factory = AbstractFactoryImpl<EnemyFactory>();
+                            auto soldier = factory.Create<Soldier>();
                         
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in run-time.
                         </aside>
                         </script>
                     </section>
@@ -885,7 +882,7 @@
                         ### Abstract Factory
 
                         We do need to define some more tools. Fist we need something to overload a
-                        method for pattern matching. Similar to what we did for the multimethod but
+                        method for pattern matching. Similar to what we did for the multi-method but
                         using a type instead.
 
                             template <typename T>
@@ -895,7 +892,7 @@
                             };
 
                         The next component we need is the AbstractProducer. It defines the CreationPolicy
-                        just as in our first example but using the Type2Type overload
+                        just as in our first example but using the *Type2Type* overload
 
                             template <class T>
                             class AbstarctProducer
@@ -906,7 +903,7 @@
                             };
                         
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in run-time.
                         </aside>
                         </script>
                     </section>
@@ -915,32 +912,38 @@
                         <script type="text/template">
                         ### Abstract Factory
 
-                        Our AbstractFactory looks just like the following
+                        It's actually our interface of what an AbstractFactory for a type list shall look like.
+
+                            template <class T>
+                            class AbstarctProducer
+                            {
+                            public:
+                                virtual T* DoCreate(Type2Type<T>) = 0;
+                                virtual ~AbstarctProducer() {}
+                            };
 
                             template
                             <
                                 class TList,
-                                    template <class> class Producer = AbstarctProducer
+                                template <class> class Producer = AbstarctProducer
                             >
                             class AbstractFactory : public GenScatterHierarchy<TList, Producer>
                             {
                             public:
-                                typedef TList ProductList;
+                                typedef TList ClassList;
 
                                 template <class T> T* Create()
                                 {
-                                    Unit<T>& unit = *this;
+                                    Producer<T>& unit = *this;
                                     return unit.DoCreate(Type2Type<T>());
                                 }
                             };
 
                         You might have noticed *GenScatterHierarchy*, it is a template that will generate a scattered hierarchy, what I mean by this is that each of the classes in it
-                        defines a pure virtyal *Create* method for each type in the type list. This way we ensure that all types have the right method generated at compile time.
-
-                        <small>The implementation of GenScatterHierarchy is included in the code repo</small>
+                        defines a pure virtual *Create* method for each type in the type list. This way we ensure that all types have the right method generated at compile time.
                         
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in run-time.
                         </aside>
                         </script>
                     </section>
@@ -949,10 +952,10 @@
                         <script type="text/template">
                         ### Abstract Factory
 
-                        As an example we provide a simple new producer
+                        Now the implementation of the interface
 
-                            template <class Class, class Base>
-                            class NewAbstractProducer : public Base
+                             template <class NewClass, class Base>
+                            class NewCreator : public Base
                             {
                                 typedef typename Base::ClassList BaseClassList;
 
@@ -961,19 +964,34 @@
 
                             public:
                                 typedef typename BaseClassList::Head AbstractClass;
-                                Class* DoCreate(Type2Type<AbstractClass>)
+                                NewClass* DoCreate(Type2Type<AbstractClass>)
                                 {
-                                    return new ConcreteProduct;
+                                    return new NewClass;
                                 }
                             };
 
-                        You might have noticed *GenScatterHierarchy*, it is a template that will generate a scattered hierarchy, what I mean by this is that each of the classes in it
-                        defines a pure virtyal *Create* method for each type in the type list. This way we ensure that all types have the right method generated at compile time.
+                            template
+                            <
+                                class AbstractFact,
+                                template <class, class> class Creator = NewCreator,
+                                class TList = typename AbstractFact::ClassList
+                            >
+                            class AbstractFactoryImpl
+                                : public GenLinearHierarchy<
+                                    typename Reverse<TList>::result, Creator, AbstractFact>
+                            {
+                            public:
+                                typedef typename AbstractFact::ClassList ClassList;
+                                typedef TList ConcreteClassList;
+                            };
 
-                        <small>The implementation of GenScatterHierarchy is included in the code repo</small>
+                        This time we have a *GenLinearHierarchy* template here and a reverse. The first generates a linear hierarchy in bottom-up fashion while *DoCreate* expects the list to be in top-bottom fashion so we have to reverse.
+
+                        <small>Don't worry about the code, it's all in the GitHub repo</small>
+                        
                         
                         <aside class="notes">
-                            All instances will have all method compiled in, we can not detect non existing methods in compile time and we might run into crashes in runtime.
+                            
                         </aside>
                         </script>
                     </section>
@@ -1004,10 +1022,10 @@
 
                     ## Any questions? Now is your time.
 
-                    <small>[Slides] [slides] and the full [project] [project] are freely avaiulable on GitHub</small>
+                    <small>[Slides] [slides] and the [source] [source] are freely available on GitHub</small>
 
                     [slides]: http://moritz-wundke.github.io/UsingTemplatesForBetterCoding
-                    [project]: https://github.com/moritz-wundke/UsingTemplatesForBetterCoding
+                    [source]: https://github.com/moritz-wundke/UsingTemplatesForBetterCoding
                     </script>
                 </section>
             </div>
